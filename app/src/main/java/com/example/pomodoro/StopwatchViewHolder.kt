@@ -20,10 +20,8 @@ class StopwatchViewHolder(
 ) :
     RecyclerView.ViewHolder(binding.root), LifecycleObserver {
 
-    private var timer: CountDownTimer? = null
-
     fun bind(stopwatch: Stopwatch) {
-        binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+        listener.setText(stopwatch, binding)
         if (stopwatch.isStarted) {
             startTimer(stopwatch)
         } else {
@@ -41,7 +39,7 @@ class StopwatchViewHolder(
                 binding.startPauseButton.setImageResource(R.drawable.ic_baseline_pause_circle_outline_24)
                 var listToStop: MutableList<Stopwatch>
                 listToStop = listener.stopOtherStopwatches(stopwatch.id) as MutableList<Stopwatch>
-                stopOtherTimers(listToStop)
+//                stopOtherTimers(listToStop)
                 listener.start(stopwatch.id)
 
             }
@@ -60,7 +58,7 @@ class StopwatchViewHolder(
         val drawable = resources.getDrawable(R.drawable.ic_baseline_play_circle_outline_24)
         binding.startPauseButton.setImageDrawable(drawable)
 
-        timer?.cancel()
+        listener.getTimer(stopwatch.id)?.cancel()
 
         binding.blinkingIndicator.isInvisible = true
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
@@ -71,9 +69,9 @@ class StopwatchViewHolder(
         val drawable = resources.getDrawable(R.drawable.ic_baseline_pause_circle_outline_24)
         binding.startPauseButton.setImageDrawable(drawable)
         binding.stopwatchTimer.setBackgroundColor(0)
-        timer?.cancel()
-        timer = getCountDownTimer(stopwatch)
-        timer?.start()
+        listener.getTimer(stopwatch.id)?.cancel()
+        listener.setTimer(stopwatch.id, getCountDownTimer(stopwatch))
+        listener.getTimer(stopwatch.id)?.start()
 
         binding.blinkingIndicator.isInvisible = false
         (binding.blinkingIndicator.background as? AnimationDrawable)?.start()
@@ -85,36 +83,18 @@ class StopwatchViewHolder(
             val interval = UNIT_TEN_MS
             override fun onTick(millisUntilFinished: Long) {
                 stopwatch.currentMs -= interval
-                binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+                listener.setText(stopwatch, binding)
             }
 
             @SuppressLint("ResourceAsColor")
             override fun onFinish() {
-                binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+                listener.setText(stopwatch, binding)
                 listener.reset(stopwatch.id)
                 binding.stopwatchTimer.setBackgroundColor(R.color.red)
             }
         }
     }
 
-    private fun Long.displayTime(): String {
-        if (this <= 0L) {
-            return START_TIME
-        }
-        val h = this / 1000 / 3600
-        val m = this / 1000 % 3600 / 60
-        val s = this / 1000 % 60
-        val ms = this % 1000 / 10
-        return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}:${displaySlot(ms)}"
-    }
-
-    private fun displaySlot(count: Long): String {
-        return if (count / 10L > 0) {
-            "$count"
-        } else {
-            "0$count"
-        }
-    }
 
     private companion object {
         private const val START_TIME = "00:00:00:00"
