@@ -4,12 +4,12 @@ import android.os.CountDownTimer
 import com.example.pomodoro.databinding.ItemBinding
 
 interface StopwatchListener {
-    fun start(id: Int)
+    fun start(id: Int, itemBinding: ItemBinding)
     fun stop(id: Int, currentMs: Long)
-    fun reset(id: Int)
+    fun reset(id: Int, itemBinding: ItemBinding)
     fun delete(id: Int)
     fun stopOtherStopwatches(id: Int): List<Stopwatch>
-    fun getTimer(id: Int): CountDownTimer?
-    fun setTimer(id: Int, newTimer: CountDownTimer?)
+    fun getTimer(): CountDownTimer?
+    fun setTimer(stopwatch: Stopwatch, itemBinding: ItemBinding)
     fun setText(stopwatch: Stopwatch, binding: ItemBinding)
 }
