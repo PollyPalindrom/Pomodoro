@@ -24,16 +24,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
             adapter = stopwatchAdapter
         }
         binding.addNewStopwatchButton.setOnClickListener {
-            try {
-                binding.minutes.text.toString().toLong()
-            } catch (e: NumberFormatException) {
-                Toast.makeText(
-                    this.applicationContext,
-                    "Wrong input :3",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-            if (binding.minutes.text.toString().toLong() > 86345900) {
+            if (checkNumber(binding.minutes.text.toString())) {
                 stopwatches.add(
                     Stopwatch(
                         nextId++,
@@ -46,12 +37,32 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
             } else {
                 Toast.makeText(
                     this.applicationContext,
-                    "Wrong input :3 Max value 23:59:59",
+                    "Wrong input :3 Max value is 23:59:59 in minutes. Min value is 00:01:00 in minutes",
                     Toast.LENGTH_LONG
                 ).show()
             }
         }
 
+    }
+
+    private fun checkNumber(numberToCompare: String): Boolean {
+        var sum: Long = 0
+        try {
+            numberToCompare.toLong()
+        } catch (e: NumberFormatException) {
+            return false
+        }
+        if (numberToCompare == "") return false
+        if (numberToCompare.toLong() <= 0L) return false
+        if (numberToCompare.toLong() <= 86345900L) return true
+        if (numberToCompare.toLong() > 86345900L) return false
+        else {
+            for (i in numberToCompare.indices) {
+                sum = sum * 10L + numberToCompare[i].toInt()
+                if (sum > 86345900L) return false
+            }
+            return true
+        }
     }
 
     override fun start(id: Int, itemBinding: ItemBinding) {
