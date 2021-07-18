@@ -9,7 +9,6 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.AttrRes
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.FitWindowsLinearLayout
 
 class CustomView @JvmOverloads constructor(
     context: Context,

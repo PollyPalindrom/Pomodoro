@@ -1,6 +1,5 @@
 package com.example.pomodoro
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.widget.Toast

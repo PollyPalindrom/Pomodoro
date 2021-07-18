@@ -1,12 +1,12 @@
 package com.example.pomodoro
 
-import android.annotation.SuppressLint
 import android.content.res.Resources
 import android.graphics.drawable.AnimationDrawable
 import androidx.core.view.isInvisible
 import androidx.lifecycle.LifecycleObserver
 import androidx.recyclerview.widget.RecyclerView
-import com.example.pomodoro.R.*
+import com.example.pomodoro.R.color
+import com.example.pomodoro.R.drawable
 import com.example.pomodoro.databinding.ItemBinding
 
 class StopwatchViewHolder(
