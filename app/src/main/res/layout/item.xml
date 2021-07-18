@@ -33,6 +33,20 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@id/blinking_indicator"
             app:layout_constraintTop_toTopOf="parent"/>
+
+        <com.example.pomodoro.CustomView
+            android:id="@+id/customView"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            app:custom_color="@color/purple_500"
+            android:layout_marginEnd="10dp"
+            android:layout_marginRight="10dp"
+            android:padding="8dp"
+            app:custom_style="fill"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/start_pause_button"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <ImageButton
             android:id="@+id/start_pause_button"
             android:layout_width="0dp"

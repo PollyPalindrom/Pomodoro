@@ -23,6 +23,8 @@ class StopwatchViewHolder(
             startAnimation()
 
         }
+        binding.customView.setPeriod(stopwatch.limit)
+        binding.customView.setCurrent(stopwatch.currentMs)
         initButtonsListeners(stopwatch)
     }
 

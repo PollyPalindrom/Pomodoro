@@ -3,6 +3,7 @@ package com.example.pomodoro
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isInvisible
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,15 +25,32 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
             adapter = stopwatchAdapter
         }
         binding.addNewStopwatchButton.setOnClickListener {
-            stopwatches.add(
-                Stopwatch(
-                    nextId++,
-                    binding.minutes.text.toString().toLong() * 60L * 1000L,
-                    binding.minutes.text.toString().toLong() * 60L * 1000L,
-                    false
+            try {
+                binding.minutes.text.toString().toLong()
+            } catch (e: NumberFormatException) {
+                Toast.makeText(
+                    this.applicationContext,
+                    "Wrong input :3",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            if (binding.minutes.text.toString().toLong() > 86345900) {
+                stopwatches.add(
+                    Stopwatch(
+                        nextId++,
+                        binding.minutes.text.toString().toLong() * 60L * 1000L,
+                        binding.minutes.text.toString().toLong() * 60L * 1000L,
+                        false
+                    )
                 )
-            )
-            stopwatchAdapter.submitList(stopwatches.toList())
+                stopwatchAdapter.submitList(stopwatches.toList())
+            } else {
+                Toast.makeText(
+                    this.applicationContext,
+                    "Wrong input :3 Max value 23:59:59",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
 
     }
@@ -50,7 +68,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
     }
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
-        setText(stopwatches[id],itemBinding)
+        setText(stopwatches[id], itemBinding)
         changeStopwatch(id, stopwatches[id].limit, false)
         timer?.cancel()
     }
@@ -77,6 +95,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
             override fun onTick(millisUntilFinished: Long) {
                 stopwatch.currentMs = millisUntilFinished
                 setText(stopwatch, itemBinding)
+                itemBinding.customView.setCurrent(stopwatch.currentMs)
             }
 
             override fun onFinish() {

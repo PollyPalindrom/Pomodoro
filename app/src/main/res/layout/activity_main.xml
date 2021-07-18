@@ -28,6 +28,7 @@
         android:id="@+id/minutes"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
+        android:maxLength="10"
         android:hint="Minutes"
         android:inputType="number"
         android:textSize="20sp"
