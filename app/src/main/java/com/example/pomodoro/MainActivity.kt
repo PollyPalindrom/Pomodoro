@@ -1,22 +1,29 @@
 package com.example.pomodoro
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isInvisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pomodoro.databinding.ActivityMainBinding
 import com.example.pomodoro.databinding.ItemBinding
 
-class MainActivity : AppCompatActivity(), StopwatchListener {
+class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     private val stopwatches = mutableListOf<Stopwatch>()
     private lateinit var binding: ActivityMainBinding
     private val stopwatchAdapter = StopwatchAdapter(this)
     private var nextId = 0
+    private var startTime = 0L
     private var timer: CountDownTimer? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.recycler.apply {
@@ -45,6 +52,28 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
 
     }
 
+    private fun getCurrentTimerTime(): Long? {
+        return stopwatches.find { it.isStarted }?.currentMs
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun onAppBackgrounded() {
+        if(stopwatches.find{it.isStarted}?.isStarted == true){
+            val startIntent = Intent(this, ForegroundService::class.java)
+            startIntent.putExtra(COMMAND_ID, COMMAND_START)
+            println(getCurrentTimerTime())
+            startIntent.putExtra(STARTED_TIMER_TIME_MS, getCurrentTimerTime())
+            startService(startIntent)
+        }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    fun onAppForegrounded() {
+        val stopIntent = Intent(this, ForegroundService::class.java)
+        stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)
+        startService(stopIntent)
+    }
+
     private fun checkNumber(numberToCompare: String): Boolean {
         var sum: Long = 0
         try {
@@ -68,7 +97,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
     override fun start(id: Int, itemBinding: ItemBinding) {
         changeStopwatch(id, null, true)
         timer?.cancel()
-        setTimer(stopwatches[id], itemBinding)
+        stopwatches.find { it.id == id }?.let { setTimer(it, itemBinding) }
         timer?.start()
     }
 
@@ -78,13 +107,14 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
     }
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
-        setText(stopwatches[id], itemBinding)
-        changeStopwatch(id, stopwatches[id].limit, false)
+        stopwatches.find { it.id == id }?.let { setText(it, itemBinding) }
+        changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false)
         timer?.cancel()
     }
 
     override fun delete(id: Int) {
         stopwatches.remove(stopwatches.find { it.id == id })
+        timer?.cancel()
         stopwatchAdapter.submitList(stopwatches.toList())
     }
 
@@ -163,7 +193,12 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
     }
 
     private companion object {
-        private const val START_TIME = "00:00:00"
+        private const val START_TIME = "00:00:00:00"
+        private const val INVALID = "INVALID"
+        private const val COMMAND_START = "COMMAND_START"
+        private const val COMMAND_STOP = "COMMAND_STOP"
+        private const val COMMAND_ID = "COMMAND_ID"
+        private const val STARTED_TIMER_TIME_MS = "STARTED_TIMER_TIME_MS"
         private const val UNIT_TEN_MS = 1000L
     }
 
