@@ -20,12 +20,11 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     private lateinit var binding: ActivityMainBinding
     private val stopwatchAdapter = StopwatchAdapter(this)
     private var nextId = 0
-    private var startTime = 0L
     private var timer: CountDownTimer? = null
-    private var timeOverSound: MediaPlayer?=null
+    private var timeOverSound: MediaPlayer? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        timeOverSound=MediaPlayer.create(this,R.raw.zvukgonga)
+        timeOverSound = MediaPlayer.create(this, R.raw.zvukgonga)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -61,7 +60,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun onAppBackgrounded() {
-        if(stopwatches.find{it.isStarted}?.isStarted == true){
+        if (stopwatches.find { it.isStarted }?.isStarted == true) {
             val startIntent = Intent(this, ForegroundService::class.java)
             startIntent.putExtra(COMMAND_ID, COMMAND_START)
             println(getCurrentTimerTime())

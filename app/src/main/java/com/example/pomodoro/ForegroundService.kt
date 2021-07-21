@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Build
-import android.os.CountDownTimer
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -19,7 +18,7 @@ class ForegroundService : Service() {
     private var notificationManager: NotificationManager? = null
     private var job: Job? = null
     private var currentTime: Long = 0L
-    private var timeOverSound:MediaPlayer?=null
+    private var timeOverSound: MediaPlayer? = null
     private val builder by lazy {
         NotificationCompat.Builder(this, CHANNEL_ID).setContentTitle("Simple Timer")
             .setGroup("Timer").setGroupSummary(false).setDefaults(NotificationCompat.DEFAULT_ALL)
@@ -29,7 +28,7 @@ class ForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        timeOverSound=MediaPlayer.create(this,R.raw.zvukgonga)
+        timeOverSound = MediaPlayer.create(this, R.raw.zvukgonga)
         notificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
     }
@@ -124,7 +123,7 @@ class ForegroundService : Service() {
                 )
                 currentTime -= INTERVAL
                 delay(INTERVAL)
-                if(currentTime<=0L){
+                if (currentTime <= 0L) {
                     notificationManager?.notify(
                         NOTIFICATION_ID,
                         getNotification(
@@ -132,7 +131,7 @@ class ForegroundService : Service() {
                         )
                     )
                     timeOverSound?.start()
-                    delay(6*INTERVAL)
+                    delay(6 * INTERVAL)
                     try {
                         job?.cancel()
                         stopForeground(true)
