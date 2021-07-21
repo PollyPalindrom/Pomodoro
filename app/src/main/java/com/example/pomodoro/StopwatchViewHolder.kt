@@ -16,14 +16,13 @@ class StopwatchViewHolder(
 ) :
     RecyclerView.ViewHolder(binding.root), LifecycleObserver {
     fun bind(stopwatch: Stopwatch) {
-        listener.setText(stopwatch.id, binding)
         if (!stopwatch.isStarted) {
             stopAnimation()
         } else {
             startAnimation()
 
         }
-        binding.customView.setPeriod(stopwatch.limit)
+        listener.setText(stopwatch.id, binding)
         binding.customView.setCurrent(stopwatch.currentMs)
         initButtonsListeners(stopwatch)
     }

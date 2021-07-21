@@ -85,12 +85,12 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         }
         if (numberToCompare == "") return false
         if (numberToCompare.toLong() <= 0L) return false
-        if (numberToCompare.toLong() <= 86345900L) return true
-        if (numberToCompare.toLong() > 86345900L) return false
+        if (numberToCompare.toLong() <= 1439L) return true
+        if (numberToCompare.toLong() > 1439L) return false
         else {
             for (i in numberToCompare.indices) {
                 sum = sum * 10L + numberToCompare[i].toInt()
-                if (sum > 86345900L) return false
+                if (sum > 1439L) return false
             }
             return true
         }
@@ -101,6 +101,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         timer?.cancel()
         stopwatches.find { it.id == id }?.let { setTimer(it, itemBinding) }
         timer?.start()
+        stopwatches.find { it.id == id }?.limit?.let { itemBinding.customView.setPeriod(it) }
     }
 
     override fun stop(id: Int, currentMs: Long) {
@@ -109,6 +110,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
+        itemBinding.background.setBackgroundColor(resources.getColor(R.color.transparent))
         stopwatches.find { it.id == id }?.let { setText(it.id, itemBinding) }
         changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false)
         timer?.cancel()
@@ -138,26 +140,34 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             override fun onTick(millisUntilFinished: Long) {
                 stopwatch.currentMs = millisUntilFinished
                 setText(stopwatch.id, itemBinding)
-                itemBinding.customView.setCurrent(stopwatch.currentMs)
             }
 
             override fun onFinish() {
-                itemBinding.background.setBackgroundColor(resources.getColor(R.color.red))
                 timeOverSound?.start()
                 setText(stopwatch.id, itemBinding)
-                reset(stopwatch.id, itemBinding)
+                changeStopwatch(
+                    stopwatch.id,
+                    stopwatches.find { it.id == stopwatch.id }?.limit,
+                    false
+                )
+                timer?.cancel()
             }
         }
     }
 
     override fun setText(id: Int, binding: ItemBinding) {
-        if (stopwatches.find { it.id == id }?.isStarted == false && stopwatches.find { it.id == id }?.limit == stopwatches.find { it.id == id }?.currentMs) {
+        if (stopwatches.find { it.id == id }?.limit == stopwatches.find { it.id == id }?.currentMs) {
             binding.stopwatchTimer.text =
                 stopwatches.find { it.id == id }?.limit?.displayTime()
         }
-        if (!binding.blinkingIndicator.isInvisible)
+        if (!binding.blinkingIndicator.isInvisible) {
             binding.stopwatchTimer.text =
                 stopwatches.find { it.id == id }?.currentMs?.displayTime()
+            stopwatches.find { it.id == id }?.currentMs?.let { binding.customView.setCurrent(it) }
+        }
+        if (stopwatches.find { it.id == id }?.currentMs == 0L) {
+            binding.background.setBackgroundColor(resources.getColor(R.color.red))
+        }
     }
 
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
@@ -185,14 +195,14 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         if (this <= 0L) {
             return START_TIME
         }
-        val h = this / 1000 / 3600
-        val m = this / 1000 % 3600 / 60
-        val s = this / 1000 % 60
+        val h = this / 1000L / 3600L
+        val m = this / 1000L % 3600L / 60L
+        val s = this / 1000L % 60L
         return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}"
     }
 
     private fun displaySlot(count: Long): String {
-        return if (count / 10L > 0) {
+        return if (count / 10L > 0L) {
             "$count"
         } else {
             "0$count"
@@ -200,8 +210,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     private companion object {
-        private const val START_TIME = "00:00:00:00"
-        private const val INVALID = "INVALID"
+        private const val START_TIME = "00:00:00"
         private const val COMMAND_START = "COMMAND_START"
         private const val COMMAND_STOP = "COMMAND_STOP"
         private const val COMMAND_ID = "COMMAND_ID"
