@@ -1,6 +1,7 @@
 package com.example.pomodoro
 
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.widget.Toast
@@ -21,8 +22,10 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     private var nextId = 0
     private var startTime = 0L
     private var timer: CountDownTimer? = null
+    private var timeOverSound: MediaPlayer?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        timeOverSound=MediaPlayer.create(this,R.raw.zvukgonga)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -140,6 +143,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
             override fun onFinish() {
                 itemBinding.stopwatchTimer.setBackgroundColor(resources.getColor(R.color.red))
+                timeOverSound?.start()
                 setText(stopwatch, itemBinding)
                 reset(stopwatch.id, itemBinding)
             }

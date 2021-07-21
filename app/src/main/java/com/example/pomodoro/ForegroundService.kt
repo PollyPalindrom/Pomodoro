@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
@@ -17,8 +18,8 @@ class ForegroundService : Service() {
     private var isServiceStarted = false
     private var notificationManager: NotificationManager? = null
     private var job: Job? = null
-    private var timer: CountDownTimer? = null
     private var currentTime: Long = 0L
+    private var timeOverSound:MediaPlayer?=null
     private val builder by lazy {
         NotificationCompat.Builder(this, CHANNEL_ID).setContentTitle("Simple Timer")
             .setGroup("Timer").setGroupSummary(false).setDefaults(NotificationCompat.DEFAULT_ALL)
@@ -28,6 +29,7 @@ class ForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        timeOverSound=MediaPlayer.create(this,R.raw.zvukgonga)
         notificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
     }
@@ -110,21 +112,7 @@ class ForegroundService : Service() {
     }
 
     private fun continueTimer(startTime: Long) {
-//        timer = object : CountDownTimer(startTime, INTERVAL) {
-//            override fun onTick(millisUntilFinished: Long) {
-//                currentTime = millisUntilFinished
-//                notificationManager?.notify(
-//                    NOTIFICATION_ID,
-//                    getNotification(
-//                        currentTime.displayTime()
-//                    )
-//                )
-//            }
-//
-//            override fun onFinish() {
-//                TODO("Not yet implemented")
-//            }
-//        }
+        currentTime = startTime
         job = GlobalScope.launch(Dispatchers.Main) {
             while (true) {
 
@@ -134,15 +122,34 @@ class ForegroundService : Service() {
                         currentTime.displayTime()
                     )
                 )
-                currentTime-= INTERVAL
+                currentTime -= INTERVAL
                 delay(INTERVAL)
+                if(currentTime<=0L){
+                    notificationManager?.notify(
+                        NOTIFICATION_ID,
+                        getNotification(
+                            "Timer is finished!!!"
+                        )
+                    )
+                    timeOverSound?.start()
+                    delay(6*INTERVAL)
+                    try {
+                        job?.cancel()
+                        stopForeground(true)
+                        stopSelf()
+                    } finally {
+                        isServiceStarted = false
+                    }
+                    break
+                }
             }
         }
+
     }
 
     private fun getPendingIntent(): PendingIntent? {
         val resultIntent = Intent(this, MainActivity::class.java)
-        resultIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        resultIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         return PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_ONE_SHOT)
     }
 
