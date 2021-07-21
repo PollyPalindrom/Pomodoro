@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
-        stopwatches.find { it.id == id }?.let { setText(it, itemBinding) }
+        stopwatches.find { it.id == id }?.let { setText(it.id, itemBinding) }
         changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false)
         timer?.cancel()
     }
@@ -117,6 +117,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     override fun delete(id: Int) {
         stopwatches.remove(stopwatches.find { it.id == id })
         timer?.cancel()
+        timer = null
         stopwatchAdapter.submitList(stopwatches.toList())
     }
 
@@ -136,24 +137,27 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         timer = object : CountDownTimer(stopwatch.currentMs, UNIT_TEN_MS) {
             override fun onTick(millisUntilFinished: Long) {
                 stopwatch.currentMs = millisUntilFinished
-                setText(stopwatch, itemBinding)
+                setText(stopwatch.id, itemBinding)
                 itemBinding.customView.setCurrent(stopwatch.currentMs)
             }
 
             override fun onFinish() {
-                itemBinding.stopwatchTimer.setBackgroundColor(resources.getColor(R.color.red))
+                itemBinding.background.setBackgroundColor(resources.getColor(R.color.red))
                 timeOverSound?.start()
-                setText(stopwatch, itemBinding)
+                setText(stopwatch.id, itemBinding)
                 reset(stopwatch.id, itemBinding)
             }
         }
     }
 
-    override fun setText(stopwatch: Stopwatch, binding: ItemBinding) {
-
+    override fun setText(id: Int, binding: ItemBinding) {
+        if (stopwatches.find { it.id == id }?.isStarted == false && stopwatches.find { it.id == id }?.limit == stopwatches.find { it.id == id }?.currentMs) {
+            binding.stopwatchTimer.text =
+                stopwatches.find { it.id == id }?.limit?.displayTime()
+        }
         if (!binding.blinkingIndicator.isInvisible)
             binding.stopwatchTimer.text =
-                stopwatch.currentMs.displayTime()
+                stopwatches.find { it.id == id }?.currentMs?.displayTime()
     }
 
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {

@@ -16,7 +16,7 @@ class StopwatchViewHolder(
 ) :
     RecyclerView.ViewHolder(binding.root), LifecycleObserver {
     fun bind(stopwatch: Stopwatch) {
-        listener.setText(stopwatch, binding)
+        listener.setText(stopwatch.id, binding)
         if (!stopwatch.isStarted) {
             stopAnimation()
         } else {
@@ -53,7 +53,7 @@ class StopwatchViewHolder(
     }
 
     private fun startAnimation() {
-        binding.stopwatchTimer.setBackgroundColor(resources.getColor(color.transparent))
+        binding.background.setBackgroundColor(resources.getColor(color.transparent))
         binding.startPauseButton.setImageResource(drawable.ic_baseline_pause_circle_outline_24)
         binding.blinkingIndicator.isInvisible = false
         (binding.blinkingIndicator.background as? AnimationDrawable)?.start()

@@ -11,5 +11,5 @@ interface StopwatchListener {
     fun stopOtherStopwatches(id: Int): List<Stopwatch>
     fun getTimer(): CountDownTimer?
     fun setTimer(stopwatch: Stopwatch, itemBinding: ItemBinding)
-    fun setText(stopwatch: Stopwatch, binding: ItemBinding)
+    fun setText(id: Int, binding: ItemBinding)
 }
