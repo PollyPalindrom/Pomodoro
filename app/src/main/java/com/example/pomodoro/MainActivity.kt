@@ -85,12 +85,12 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         }
         if (numberToCompare == "") return false
         if (numberToCompare.toLong() <= 0L) return false
-        if (numberToCompare.toLong() <= 1439L) return true
-        if (numberToCompare.toLong() > 1439L) return false
+        if (numberToCompare.toLong() <= 1440L) return true
+        if (numberToCompare.toLong() > 1440L) return false
         else {
             for (i in numberToCompare.indices) {
                 sum = sum * 10L + numberToCompare[i].toInt()
-                if (sum > 1439L) return false
+                if (sum > 1440L) return false
             }
             return true
         }
@@ -110,7 +110,6 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
-        itemBinding.background.setBackgroundColor(resources.getColor(R.color.transparent))
         stopwatches.find { it.id == id }?.let { setText(it.id, itemBinding) }
         changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false)
         timer?.cancel()
@@ -164,9 +163,6 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             binding.stopwatchTimer.text =
                 stopwatches.find { it.id == id }?.currentMs?.displayTime()
             stopwatches.find { it.id == id }?.currentMs?.let { binding.customView.setCurrent(it) }
-        }
-        if (stopwatches.find { it.id == id }?.currentMs == 0L) {
-            binding.background.setBackgroundColor(resources.getColor(R.color.red))
         }
     }
 
