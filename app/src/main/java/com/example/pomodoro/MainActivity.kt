@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
         itemBinding.background.setBackgroundColor(resources.getColor(R.color.transparent))
-        stopwatches.find { it.id == id }?.shouldBeRestarted=false
+        stopwatches.find { it.id == id }?.shouldBeRestarted = false
         stopwatches.find { it.id == id }?.let { setText(it.id, itemBinding) }
         changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false, false)
         timer?.cancel()
