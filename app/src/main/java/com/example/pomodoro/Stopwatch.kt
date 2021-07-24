@@ -4,5 +4,6 @@ data class Stopwatch(
     val id: Int,
     var currentMs: Long,
     var limit: Long,
-    var isStarted: Boolean
+    var isStarted: Boolean,
+    var shouldBeRestarted: Boolean
 )

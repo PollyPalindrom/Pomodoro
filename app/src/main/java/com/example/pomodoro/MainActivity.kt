@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
                         nextId++,
                         binding.minutes.text.toString().toLong() * 60L * 1000L,
                         binding.minutes.text.toString().toLong() * 60L * 1000L,
+                        false,
                         false
                     )
                 )
@@ -46,7 +47,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             } else {
                 Toast.makeText(
                     this.applicationContext,
-                    "Wrong input :3 Max value is 23:59:59 in minutes. Min value is 00:01:00 in minutes",
+                    "Wrong input :3 Max value is 24:00:00 in minutes. Min value is 00:01:00 in minutes",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -97,7 +98,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     override fun start(id: Int, itemBinding: ItemBinding) {
-        changeStopwatch(id, null, true)
+        changeStopwatch(id, null, true, false)
         timer?.cancel()
         stopwatches.find { it.id == id }?.let { setTimer(it, itemBinding) }
         timer?.start()
@@ -105,13 +106,15 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     override fun stop(id: Int, currentMs: Long) {
-        changeStopwatch(id, currentMs, false)
+        changeStopwatch(id, currentMs, false, false)
         timer?.cancel()
     }
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
+        itemBinding.background.setBackgroundColor(resources.getColor(R.color.transparent))
+        stopwatches.find { it.id == id }?.shouldBeRestarted=false
         stopwatches.find { it.id == id }?.let { setText(it.id, itemBinding) }
-        changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false)
+        changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false, false)
         timer?.cancel()
     }
 
@@ -144,14 +147,26 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             override fun onFinish() {
                 timeOverSound?.start()
                 setText(stopwatch.id, itemBinding)
+                stopwatch.shouldBeRestarted = true
                 changeStopwatch(
                     stopwatch.id,
                     stopwatches.find { it.id == stopwatch.id }?.limit,
-                    false
+                    false,
+                    true
                 )
+                setColor(stopwatch, itemBinding)
                 timer?.cancel()
             }
         }
+    }
+
+    private fun setColor(stopwatch: Stopwatch, itemBinding: ItemBinding) {
+        if (stopwatch.shouldBeRestarted || stopwatch.currentMs <= 0L) itemBinding.background.setBackgroundColor(
+            resources.getColor(
+                R.color.red
+            )
+        )
+        else itemBinding.background.setBackgroundColor(resources.getColor(R.color.transparent))
     }
 
     override fun setText(id: Int, binding: ItemBinding) {
@@ -166,7 +181,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         }
     }
 
-    private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
+    private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean, restart: Boolean) {
         val newTimers = mutableListOf<Stopwatch>()
         stopwatches.forEach {
             if (it.id == id) {
@@ -175,7 +190,8 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
                         it.id,
                         currentMs ?: it.currentMs,
                         it.limit,
-                        isStarted
+                        isStarted,
+                        restart
                     )
                 )
             } else {

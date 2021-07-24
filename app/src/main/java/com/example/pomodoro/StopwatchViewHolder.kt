@@ -22,6 +22,16 @@ class StopwatchViewHolder(
             startAnimation()
 
         }
+        if (!stopwatch.shouldBeRestarted) binding.background.setBackgroundColor(
+            resources.getColor(
+                color.transparent
+            )
+        )
+        else binding.background.setBackgroundColor(
+            resources.getColor(
+                color.red
+            )
+        )
         listener.setText(stopwatch.id, binding)
         binding.customView.setCurrent(stopwatch.currentMs)
         initButtonsListeners(stopwatch)
