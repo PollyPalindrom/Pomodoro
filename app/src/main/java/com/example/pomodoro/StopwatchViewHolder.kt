@@ -18,22 +18,13 @@ class StopwatchViewHolder(
     fun bind(stopwatch: Stopwatch) {
         if (!stopwatch.isStarted) {
             stopAnimation()
+            if (stopwatch.currentMs == 0L) binding.customView.setCurrent(0)
+            else binding.customView.setCurrent(stopwatch.currentMs)
         } else {
             startAnimation()
-
+            binding.customView.setCurrent(stopwatch.currentMs)
         }
-        if (!stopwatch.shouldBeRestarted) binding.background.setBackgroundColor(
-            resources.getColor(
-                color.transparent
-            )
-        )
-        else binding.background.setBackgroundColor(
-            resources.getColor(
-                color.red
-            )
-        )
         listener.setText(stopwatch.id, binding)
-        binding.customView.setCurrent(stopwatch.currentMs)
         initButtonsListeners(stopwatch)
     }
 
@@ -62,7 +53,6 @@ class StopwatchViewHolder(
     }
 
     private fun startAnimation() {
-        binding.background.setBackgroundColor(resources.getColor(color.transparent))
         binding.startPauseButton.setImageResource(drawable.ic_baseline_pause_circle_outline_24)
         binding.blinkingIndicator.isInvisible = false
         (binding.blinkingIndicator.background as? AnimationDrawable)?.start()

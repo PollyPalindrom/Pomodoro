@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
                 stopwatches.add(
                     Stopwatch(
                         nextId++,
-                        binding.minutes.text.toString().toLong() * 60L * 1000L,
+                        0,
                         binding.minutes.text.toString().toLong() * 60L * 1000L,
                         false,
                         false
@@ -100,9 +100,15 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     override fun start(id: Int, itemBinding: ItemBinding) {
         changeStopwatch(id, null, true, false)
         timer?.cancel()
+        if (stopwatches.find { it.id == id }?.currentMs == 0L) stopwatches.find { it.id == id }?.currentMs =
+            stopwatches.find { it.id == id }?.limit!!
         stopwatches.find { it.id == id }?.let { setTimer(it, itemBinding) }
         timer?.start()
-        stopwatches.find { it.id == id }?.limit?.let { itemBinding.customView.setPeriod(it) }
+        if (!itemBinding.blinkingIndicator.isInvisible) stopwatches.find { it.id == id }?.limit?.let {
+            itemBinding.customView.setPeriod(
+                it
+            )
+        }
     }
 
     override fun stop(id: Int, currentMs: Long) {
@@ -111,7 +117,6 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     override fun reset(id: Int, itemBinding: ItemBinding) {
-        itemBinding.background.setBackgroundColor(resources.getColor(R.color.transparent))
         stopwatches.find { it.id == id }?.shouldBeRestarted = false
         stopwatches.find { it.id == id }?.let { setText(it.id, itemBinding) }
         changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false, false)
@@ -119,9 +124,11 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     override fun delete(id: Int) {
+        if (stopwatches.find { it.id == id }?.isStarted == true) {
+            timer?.cancel()
+            timer = null
+        }
         stopwatches.remove(stopwatches.find { it.id == id })
-        timer?.cancel()
-        timer = null
         stopwatchAdapter.submitList(stopwatches.toList())
     }
 
@@ -142,6 +149,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             override fun onTick(millisUntilFinished: Long) {
                 stopwatch.currentMs = millisUntilFinished
                 setText(stopwatch.id, itemBinding)
+                setCustomView(stopwatch.id, itemBinding)
             }
 
             override fun onFinish() {
@@ -154,30 +162,25 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
                     false,
                     true
                 )
-                setColor(stopwatch, itemBinding)
                 timer?.cancel()
             }
         }
     }
 
-    private fun setColor(stopwatch: Stopwatch, itemBinding: ItemBinding) {
-        if (stopwatch.shouldBeRestarted || stopwatch.currentMs <= 0L) itemBinding.background.setBackgroundColor(
-            resources.getColor(
-                R.color.red
-            )
-        )
-        else itemBinding.background.setBackgroundColor(resources.getColor(R.color.transparent))
+    fun setCustomView(id: Int, binding: ItemBinding) {
+        if (!binding.blinkingIndicator.isInvisible) {
+            stopwatches.find { it.id == id }?.currentMs?.let { binding.customView.setCurrent(it) }
+        }
     }
 
     override fun setText(id: Int, binding: ItemBinding) {
-        if (stopwatches.find { it.id == id }?.limit == stopwatches.find { it.id == id }?.currentMs) {
+        if (stopwatches.find { it.id == id }?.currentMs == 0L) {
             binding.stopwatchTimer.text =
                 stopwatches.find { it.id == id }?.limit?.displayTime()
         }
         if (!binding.blinkingIndicator.isInvisible) {
             binding.stopwatchTimer.text =
                 stopwatches.find { it.id == id }?.currentMs?.displayTime()
-            stopwatches.find { it.id == id }?.currentMs?.let { binding.customView.setCurrent(it) }
         }
     }
 
