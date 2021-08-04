@@ -26,15 +26,19 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     private var timeOverSound: MediaPlayer? = null
     private var instance: MainActivity? = null
     private var stopwatchId: Int = 0
-
+    private var stopwatchDao: StopwatchDao? = null
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         instance = this
-//        var database = Room.databaseBuilder<AppDatabase>(applicationContext, AppDatabase::class.java, "database").build()
-//        stopwatchDao = database!!.stopwatchDao()
-//        if (stopwatchDao?.getAll()?.size != 0) {
-//            stopwatchDao?.getById(0)?.stopwatches?.let { stopwatchAdapter.setStopwatches(it) }
-//        }
+        val database =
+            Room.databaseBuilder(this, AppDatabase::class.java, "stopwatches")
+                .allowMainThreadQueries()
+                .build()
+        stopwatchDao = database.stopwatchDao()
+        if (stopwatchDao?.getAll()?.size != 0) {
+            stopwatchAdapter.setStopwatches(stopwatchDao?.getAll() as List<Stopwatch>)
+        }
         timeOverSound = MediaPlayer.create(this, R.raw.zvukgonga)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -48,7 +52,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             if (checkNumber(binding.minutes.text.toString())) {
 
                 stopwatchAdapter.addStopwatch(
-                    Stopwatch(stopwatchId,
+                    Stopwatch(
                         0,
                         binding.minutes.text.toString().toLong() * 60L * 1000L,
                         isStarted = false,
@@ -85,14 +89,34 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         startService(stopIntent)
     }
 
-    override fun onBackPressed() {
-//        if (stopwatchDao?.getAll()?.size == 0) {
-//            stopwatchDao?.insert(Stopwatches(stopwatchAdapter.getStopwatches()))
-//        }
-//        else{
-//            stopwatchDao?.update(Stopwatches(stopwatchAdapter.getStopwatches()))
-//        }
-            super.onBackPressed()
+    override fun onStop() {
+        if (stopwatchDao?.getAll()?.size == 0) {
+            stopwatchAdapter.getStopwatches().forEach { stopwatchDao?.insert(it) }
+        } else {
+            stopwatchDao?.getAll()?.forEach {
+                if (it != null) {
+                    if (!checkList(stopwatchAdapter.getStopwatches(), it.id)) {
+                        stopwatchDao?.delete(it)
+                    }
+                }
+            }
+            stopwatchAdapter.getStopwatches().forEach { stopwatch ->
+                if (checkList(
+                        stopwatchDao?.getAll() as List<Stopwatch>,
+                        stopwatch.id
+                    )
+                ) stopwatchDao?.update(stopwatch)
+                else stopwatchDao?.insert(stopwatch)
+            }
+
+        }
+        super.onStop()
+    }
+
+    private fun checkList(list: List<Stopwatch>, id: Int): Boolean {
+        var temp: Boolean = false
+        list.forEach { if (it.id == id) temp = true }
+        return temp
     }
 
     private fun checkNumber(numberToCompare: String): Boolean {
@@ -202,7 +226,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         if (stopwatch.currentMs == 0L) {
             binding.stopwatchTimer.text =
                 stopwatch.limit.displayTime()
-        } else if (!binding.blinkingIndicator.isInvisible)
+        } else if (!binding.blinkingIndicator.isInvisible || !stopwatch.isStarted)
             binding.stopwatchTimer.text =
                 stopwatch.currentMs.displayTime()
     }

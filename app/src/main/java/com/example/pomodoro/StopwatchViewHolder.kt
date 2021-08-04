@@ -9,7 +9,7 @@ import com.example.pomodoro.R.drawable
 import com.example.pomodoro.databinding.ItemBinding
 
 class StopwatchViewHolder(
-    private val binding: ItemBinding,
+    val binding: ItemBinding,
     private val listener: StopwatchListener,
     private val resources: Resources
 ) :
@@ -21,6 +21,7 @@ class StopwatchViewHolder(
         } else {
             startAnimation()
         }
+        binding.customView.setPeriod(stopwatch.limit)
         binding.customView.setCurrent(stopwatch.currentMs)
         listener.setText(stopwatch, binding)
         initButtonsListeners(stopwatch)
@@ -68,7 +69,7 @@ class StopwatchViewHolder(
         }
     }
 
-     fun stopAnimation() {
+    fun stopAnimation() {
         binding.startPauseButton.setImageResource(drawable.ic_baseline_play_circle_outline_24)
         if (!binding.blinkingIndicator.isInvisible) {
             binding.blinkingIndicator.isInvisible = true

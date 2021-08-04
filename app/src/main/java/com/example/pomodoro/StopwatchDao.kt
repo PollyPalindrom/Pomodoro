@@ -8,10 +8,7 @@ interface StopwatchDao {
     @Query("SELECT * FROM stopwatch")
     fun getAll(): List<Stopwatch?>?
 
-    @Query("SELECT * FROM stopwatch WHERE id = :id")
-    fun getById(id: Long): Stopwatch?
-
-    @Insert(entity=Stopwatch::class,onConflict = OnConflictStrategy.REPLACE)
+    @Insert(entity = Stopwatch::class, onConflict = OnConflictStrategy.REPLACE)
     fun insert(stopwatches: Stopwatch?)
 
     @Update
