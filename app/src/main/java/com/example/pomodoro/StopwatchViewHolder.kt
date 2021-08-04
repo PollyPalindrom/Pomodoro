@@ -5,7 +5,6 @@ import android.graphics.drawable.AnimationDrawable
 import androidx.core.view.isInvisible
 import androidx.lifecycle.LifecycleObserver
 import androidx.recyclerview.widget.RecyclerView
-import com.example.pomodoro.R.color
 import com.example.pomodoro.R.drawable
 import com.example.pomodoro.databinding.ItemBinding
 
@@ -15,58 +14,66 @@ class StopwatchViewHolder(
     private val resources: Resources
 ) :
     RecyclerView.ViewHolder(binding.root), LifecycleObserver {
+
     fun bind(stopwatch: Stopwatch) {
         if (!stopwatch.isStarted) {
             stopAnimation()
-            if (stopwatch.currentMs == 0L) binding.customView.setCurrent(0)
-            else binding.customView.setCurrent(stopwatch.currentMs)
         } else {
             startAnimation()
-            binding.customView.setCurrent(stopwatch.currentMs)
         }
-        listener.setText(stopwatch.id, binding)
+        binding.customView.setCurrent(stopwatch.currentMs)
+        listener.setText(stopwatch, binding)
         initButtonsListeners(stopwatch)
     }
+
 
     private fun initButtonsListeners(stopwatch: Stopwatch) {
 
         binding.startPauseButton.setOnClickListener {
             if (stopwatch.isStarted) {
-                stopAnimation()
-                listener.stop(stopwatch.id, stopwatch.currentMs)
+                if (adapterPosition >= 0) {
+                    stopAnimation()
+                    listener.stop(adapterPosition, stopwatch, stopwatch.currentMs)
+                }
 
             } else {
-                startAnimation()
-                val listToStop: MutableList<Stopwatch> =
-                    listener.stopOtherStopwatches(stopwatch.id) as MutableList<Stopwatch>
-                stopOtherTimers(listToStop)
-                listener.start(stopwatch.id, binding)
+                if (adapterPosition >= 0) {
+                    startAnimation()
+                    listener.stopOtherStopwatches()
+                    listener.start(adapterPosition, stopwatch, binding)
+                }
 
             }
         }
         binding.restartButton.setOnClickListener {
-            stopwatch.currentMs = stopwatch.limit
-            listener.reset(stopwatch.id, binding)
-            stopAnimation()
+            if (adapterPosition >= 0) {
+                stopwatch.currentMs = stopwatch.limit
+                listener.reset(adapterPosition, stopwatch, binding)
+                stopAnimation()
+            }
         }
-        binding.deleteButton.setOnClickListener { listener.delete(stopwatch.id) }
+        binding.deleteButton.setOnClickListener {
+            if (adapterPosition >= 0) listener.delete(
+                adapterPosition,
+                stopwatch
+            )
+        }
     }
 
     private fun startAnimation() {
         binding.startPauseButton.setImageResource(drawable.ic_baseline_pause_circle_outline_24)
-        binding.blinkingIndicator.isInvisible = false
-        (binding.blinkingIndicator.background as? AnimationDrawable)?.start()
-    }
-
-    private fun stopAnimation() {
-        binding.startPauseButton.setImageResource(drawable.ic_baseline_play_circle_outline_24)
-        binding.blinkingIndicator.isInvisible = true
-        (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
-    }
-
-    private fun stopOtherTimers(listToStop: List<Stopwatch>) {
-        listToStop.forEach {
-            listener.stop(it.id, it.currentMs)
+        if (binding.blinkingIndicator.isInvisible) {
+            binding.blinkingIndicator.isInvisible = false
+            (binding.blinkingIndicator.background as? AnimationDrawable)?.start()
         }
     }
+
+     fun stopAnimation() {
+        binding.startPauseButton.setImageResource(drawable.ic_baseline_play_circle_outline_24)
+        if (!binding.blinkingIndicator.isInvisible) {
+            binding.blinkingIndicator.isInvisible = true
+            (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
+        }
+    }
+
 }

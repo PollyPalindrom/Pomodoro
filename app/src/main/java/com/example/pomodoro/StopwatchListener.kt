@@ -1,15 +1,17 @@
 package com.example.pomodoro
 
 import android.os.CountDownTimer
+import androidx.recyclerview.widget.RecyclerView
 import com.example.pomodoro.databinding.ItemBinding
 
 interface StopwatchListener {
-    fun start(id: Int, itemBinding: ItemBinding)
-    fun stop(id: Int, currentMs: Long)
-    fun reset(id: Int, itemBinding: ItemBinding)
-    fun delete(id: Int)
-    fun stopOtherStopwatches(id: Int): List<Stopwatch>
-    fun getTimer(): CountDownTimer?
-    fun setTimer(stopwatch: Stopwatch, itemBinding: ItemBinding)
-    fun setText(id: Int, binding: ItemBinding)
+    fun start(position: Int, stopwatch: Stopwatch, itemBinding: ItemBinding)
+    fun stop(position: Int, stopwatch: Stopwatch, currentMs: Long)
+    fun reset(position: Int, stopwatch: Stopwatch, itemBinding: ItemBinding)
+    fun delete(position: Int, stopwatch: Stopwatch)
+    fun stopOtherStopwatches()
+    fun getMyTimer(): CountDownTimer?
+    fun setTimer(position: Int, stopwatch: Stopwatch, itemBinding: ItemBinding)
+    fun setText(stopwatch: Stopwatch, binding: ItemBinding)
+    fun getViewHolder(position: Int):RecyclerView.ViewHolder?
 }

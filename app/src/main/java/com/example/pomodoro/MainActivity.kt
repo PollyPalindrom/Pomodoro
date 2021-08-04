@@ -12,18 +12,29 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import com.example.pomodoro.databinding.ActivityMainBinding
 import com.example.pomodoro.databinding.ItemBinding
 
+
 class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
-    private val stopwatches = mutableListOf<Stopwatch>()
+
     private lateinit var binding: ActivityMainBinding
     private val stopwatchAdapter = StopwatchAdapter(this)
-    private var nextId = 0
     private var timer: CountDownTimer? = null
     private var timeOverSound: MediaPlayer? = null
+    private var instance: MainActivity? = null
+    private var stopwatchId: Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        instance = this
+//        var database = Room.databaseBuilder<AppDatabase>(applicationContext, AppDatabase::class.java, "database").build()
+//        stopwatchDao = database!!.stopwatchDao()
+//        if (stopwatchDao?.getAll()?.size != 0) {
+//            stopwatchDao?.getById(0)?.stopwatches?.let { stopwatchAdapter.setStopwatches(it) }
+//        }
         timeOverSound = MediaPlayer.create(this, R.raw.zvukgonga)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -32,18 +43,19 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
             layoutManager = LinearLayoutManager(context)
             adapter = stopwatchAdapter
         }
+
         binding.addNewStopwatchButton.setOnClickListener {
             if (checkNumber(binding.minutes.text.toString())) {
-                stopwatches.add(
-                    Stopwatch(
-                        nextId++,
+
+                stopwatchAdapter.addStopwatch(
+                    Stopwatch(stopwatchId,
                         0,
                         binding.minutes.text.toString().toLong() * 60L * 1000L,
-                        false,
-                        false
+                        isStarted = false,
+                        shouldBeRestarted = false
                     )
                 )
-                stopwatchAdapter.submitList(stopwatches.toList())
+                stopwatchId++
             } else {
                 Toast.makeText(
                     this.applicationContext,
@@ -55,17 +67,13 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     }
 
-    private fun getCurrentTimerTime(): Long? {
-        return stopwatches.find { it.isStarted }?.currentMs
-    }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun onAppBackgrounded() {
-        if (stopwatches.find { it.isStarted }?.isStarted == true) {
+        if (stopwatchAdapter.timerIsStarted() == true) {
             val startIntent = Intent(this, ForegroundService::class.java)
             startIntent.putExtra(COMMAND_ID, COMMAND_START)
-            println(getCurrentTimerTime())
-            startIntent.putExtra(STARTED_TIMER_TIME_MS, getCurrentTimerTime())
+            startIntent.putExtra(STARTED_TIMER_TIME_MS, stopwatchAdapter.getCurrentTimerTime())
             startService(startIntent)
         }
     }
@@ -75,6 +83,16 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         val stopIntent = Intent(this, ForegroundService::class.java)
         stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)
         startService(stopIntent)
+    }
+
+    override fun onBackPressed() {
+//        if (stopwatchDao?.getAll()?.size == 0) {
+//            stopwatchDao?.insert(Stopwatches(stopwatchAdapter.getStopwatches()))
+//        }
+//        else{
+//            stopwatchDao?.update(Stopwatches(stopwatchAdapter.getStopwatches()))
+//        }
+            super.onBackPressed()
     }
 
     private fun checkNumber(numberToCompare: String): Boolean {
@@ -97,113 +115,100 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         }
     }
 
-    override fun start(id: Int, itemBinding: ItemBinding) {
-        changeStopwatch(id, null, true, false)
+    override fun start(position: Int, stopwatch: Stopwatch, itemBinding: ItemBinding) {
+        stopwatchAdapter.changeStopwatch(
+            position, null,
+            isStarted = true,
+            shouldBeRestarted = false
+        )
         timer?.cancel()
-        if (stopwatches.find { it.id == id }?.currentMs == 0L) stopwatches.find { it.id == id }?.currentMs =
-            stopwatches.find { it.id == id }?.limit!!
-        stopwatches.find { it.id == id }?.let { setTimer(it, itemBinding) }
+        if (stopwatch.currentMs == 0L) stopwatch.currentMs = stopwatch.limit
+        setTimer(position, stopwatch, itemBinding)
         timer?.start()
-        if (!itemBinding.blinkingIndicator.isInvisible) stopwatches.find { it.id == id }?.limit?.let {
-            itemBinding.customView.setPeriod(
-                it
-            )
+        if (!itemBinding.blinkingIndicator.isInvisible) {//работает каждый раз, когда стартует таймер
+            itemBinding.customView.setPeriod((stopwatch.limit))
         }
     }
 
-    override fun stop(id: Int, currentMs: Long) {
-        changeStopwatch(id, currentMs, false, false)
+
+    override fun stop(position: Int, stopwatch: Stopwatch, currentMs: Long) {
+        stopwatchAdapter.changeStopwatch(
+            position, currentMs,
+            isStarted = false,
+            shouldBeRestarted = false
+        )
         timer?.cancel()
     }
 
-    override fun reset(id: Int, itemBinding: ItemBinding) {
-        stopwatches.find { it.id == id }?.shouldBeRestarted = false
-        stopwatches.find { it.id == id }?.let { setText(it.id, itemBinding) }
-        changeStopwatch(id, stopwatches.find { it.id == id }?.limit, false, false)
-        timer?.cancel()
+    override fun reset(position: Int, stopwatch: Stopwatch, itemBinding: ItemBinding) {
+        stopwatch.shouldBeRestarted = false
+        stopwatch.currentMs = 0L
+        setText(stopwatch, itemBinding)
+        if (stopwatch.isStarted) timer?.cancel()
+        stopwatchAdapter.changeStopwatch(
+            position, 0,
+            isStarted = false,
+            shouldBeRestarted = false
+        )
+        itemBinding.customView.setPeriod(0)
+        itemBinding.customView.setCurrent(0)
     }
 
-    override fun delete(id: Int) {
-        if (stopwatches.find { it.id == id }?.isStarted == true) {
+    override fun delete(position: Int, stopwatch: Stopwatch) {
+        if (stopwatch.isStarted) {
             timer?.cancel()
             timer = null
         }
-        stopwatches.remove(stopwatches.find { it.id == id })
-        stopwatchAdapter.submitList(stopwatches.toList())
+        stopwatchAdapter.deleteStopwatch(position)
     }
 
-    override fun stopOtherStopwatches(id: Int): List<Stopwatch> {
-        val listToStop: MutableList<Stopwatch> = mutableListOf()
-        stopwatches.forEach {
-            if (it.id != id && it.isStarted) listToStop.add(it)
-        }
-        return listToStop
+    override fun stopOtherStopwatches() {
+        stopwatchAdapter.stopOtherTimers()
+        timer?.cancel()
     }
 
-    override fun getTimer(): CountDownTimer? {
+    override fun getMyTimer(): CountDownTimer? {
         return timer
     }
 
-    override fun setTimer(stopwatch: Stopwatch, itemBinding: ItemBinding) {
+    override fun setTimer(position: Int, stopwatch: Stopwatch, itemBinding: ItemBinding) {
         timer = object : CountDownTimer(stopwatch.currentMs, UNIT_TEN_MS) {
             override fun onTick(millisUntilFinished: Long) {
                 stopwatch.currentMs = millisUntilFinished
-                setText(stopwatch.id, itemBinding)
-                setCustomView(stopwatch.id, itemBinding)
+                setText(stopwatch, itemBinding)
+//                stopwatchAdapter.notifyDataSetChanged()
+
+                if (!itemBinding.blinkingIndicator.isInvisible) itemBinding.customView.setCurrent(
+                    stopwatch.currentMs
+                )
             }
 
             override fun onFinish() {
                 timeOverSound?.start()
-                setText(stopwatch.id, itemBinding)
+                setText(stopwatch, itemBinding)
                 stopwatch.shouldBeRestarted = true
-                changeStopwatch(
-                    stopwatch.id,
-                    stopwatches.find { it.id == stopwatch.id }?.limit,
-                    false,
-                    true
+                stopwatchAdapter.changeStopwatch(
+                    position, stopwatch.limit,
+                    isStarted = false,
+                    shouldBeRestarted = true
                 )
                 timer?.cancel()
             }
         }
     }
 
-    fun setCustomView(id: Int, binding: ItemBinding) {
-        if (!binding.blinkingIndicator.isInvisible) {
-            stopwatches.find { it.id == id }?.currentMs?.let { binding.customView.setCurrent(it) }
-        }
+
+    override fun setText(stopwatch: Stopwatch, binding: ItemBinding) {
+        if (stopwatch.currentMs == 0L) {
+            binding.stopwatchTimer.text =
+                stopwatch.limit.displayTime()
+        } else if (!binding.blinkingIndicator.isInvisible)
+            binding.stopwatchTimer.text =
+                stopwatch.currentMs.displayTime()
     }
 
-    override fun setText(id: Int, binding: ItemBinding) {
-        if (stopwatches.find { it.id == id }?.currentMs == 0L) {
-            binding.stopwatchTimer.text =
-                stopwatches.find { it.id == id }?.limit?.displayTime()
-        }
-        if (!binding.blinkingIndicator.isInvisible) {
-            binding.stopwatchTimer.text =
-                stopwatches.find { it.id == id }?.currentMs?.displayTime()
-        }
-    }
-
-    private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean, restart: Boolean) {
-        val newTimers = mutableListOf<Stopwatch>()
-        stopwatches.forEach {
-            if (it.id == id) {
-                newTimers.add(
-                    Stopwatch(
-                        it.id,
-                        currentMs ?: it.currentMs,
-                        it.limit,
-                        isStarted,
-                        restart
-                    )
-                )
-            } else {
-                newTimers.add(it)
-            }
-        }
-        stopwatchAdapter.submitList(newTimers)
-        stopwatches.clear()
-        stopwatches.addAll(newTimers)
+    override fun getViewHolder(position: Int): RecyclerView.ViewHolder? {
+        return binding.recycler.findViewHolderForAdapterPosition(position)
     }
 
     private fun Long.displayTime(): String {

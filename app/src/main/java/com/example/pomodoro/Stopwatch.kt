@@ -1,7 +1,11 @@
 package com.example.pomodoro
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity
 data class Stopwatch(
-    val id: Int,
+    @PrimaryKey var id:Int,
     var currentMs: Long,
     var limit: Long,
     var isStarted: Boolean,
