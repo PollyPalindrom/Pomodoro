@@ -10,29 +10,32 @@
         android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/add_new_stopwatch_button"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/item" />
 
-    <Button
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add_new_stopwatch_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <EditText
-        android:id="@+id/minutes"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:maxLength="10"
-        android:hint="Minutes"
-        android:inputType="number"
-        android:textSize="20sp"
+        android:backgroundTint="@color/purple_500"
+        android:src="@drawable/ic_baseline_add_24"
         app:layout_constraintBottom_toBottomOf="parent"
-        tools:ignore="MissingConstraints" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.921"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.88" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

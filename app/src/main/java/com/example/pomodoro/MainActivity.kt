@@ -4,9 +4,9 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
@@ -28,9 +28,12 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     private var instance: MainActivity? = null
     private var stopwatchId: Int = 0
     private var stopwatchDao: StopwatchDao? = null
+    private val touchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(stopwatchAdapter))
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+
         instance = this
         val database =
             Room.databaseBuilder(this, AppDatabase::class.java, "stopwatches")
@@ -40,39 +43,32 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         if (stopwatchDao?.getAll()?.size != 0) {
             stopwatchAdapter.setStopwatches(stopwatchDao?.getAll() as List<Stopwatch>)
         }
+
         timeOverSound = MediaPlayer.create(this, R.raw.zvukgonga)
+
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         binding.recycler.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = stopwatchAdapter
         }
 
         binding.addNewStopwatchButton.setOnClickListener {
-            if (checkNumber(binding.minutes.text.toString())) {
-
-                stopwatchAdapter.addStopwatch(
-                    Stopwatch(
-                        0,
-                        binding.minutes.text.toString().toLong() * 60L * 1000L,
-                        isStarted = false,
-                        shouldBeRestarted = false
-                    )
-                )
-                stopwatchId++
-            } else {
-                Toast.makeText(
-                    this.applicationContext,
-                    "Wrong input :3 Max value is 24:00:00 in minutes. Min value is 00:01:00 in minutes",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            val timeFragment = TimeFragment()
+            val transaction = supportFragmentManager.beginTransaction()
+            transaction.replace(R.id.container, timeFragment).commit()
+            transaction.addToBackStack("fragment")
         }
-        val touchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(stopwatchAdapter))
+
         touchHelper.attachToRecyclerView(binding.recycler)
     }
 
+    fun getAdapter(): StopwatchAdapter? {
+        return stopwatchAdapter
+    }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun onAppBackgrounded() {
@@ -116,29 +112,9 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
     }
 
     private fun checkList(list: List<Stopwatch>, id: Int): Boolean {
-        var temp: Boolean = false
+        var temp = false
         list.forEach { if (it.id == id) temp = true }
         return temp
-    }
-
-    private fun checkNumber(numberToCompare: String): Boolean {
-        var sum: Long = 0
-        try {
-            numberToCompare.toLong()
-        } catch (e: NumberFormatException) {
-            return false
-        }
-        if (numberToCompare == "") return false
-        if (numberToCompare.toLong() <= 0L) return false
-        if (numberToCompare.toLong() <= 1440L) return true
-        if (numberToCompare.toLong() > 1440L) return false
-        else {
-            for (i in numberToCompare.indices) {
-                sum = sum * 10L + numberToCompare[i].toInt()
-                if (sum > 1440L) return false
-            }
-            return true
-        }
     }
 
     override fun start(position: Int, stopwatch: Stopwatch, itemBinding: ItemBinding) {
@@ -245,6 +221,16 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
         val m = this / 1000L % 3600L / 60L
         val s = this / 1000L % 60L
         return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}"
+    }
+
+    fun makeButtonInvisible() {
+        binding.addNewStopwatchButton.isClickable = false
+        binding.addNewStopwatchButton.isVisible = false
+    }
+
+    fun makeButtonVisible() {
+        binding.addNewStopwatchButton.isClickable = true
+        binding.addNewStopwatchButton.isVisible = true
     }
 
     private fun displaySlot(count: Long): String {
