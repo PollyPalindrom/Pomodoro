@@ -4,9 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pomodoro.databinding.ItemBinding
+import java.util.*
 
 class StopwatchAdapter(private val listener: StopwatchListener) :
-    RecyclerView.Adapter<StopwatchViewHolder>() {
+    RecyclerView.Adapter<StopwatchViewHolder>(), ItemTouchHelperAdapter {
 
     private var stopwatches = mutableListOf<Stopwatch>()
 
@@ -77,5 +78,23 @@ class StopwatchAdapter(private val listener: StopwatchListener) :
 
     override fun getItemCount(): Int {
         return stopwatches.size
+    }
+
+    override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
+        if (fromPosition < toPosition) {
+            for (i in fromPosition until toPosition) {
+                Collections.swap(stopwatches, i, i + 1)
+            }
+        } else {
+            for (i in fromPosition downTo toPosition + 1) {
+                Collections.swap(stopwatches, i, i - 1)
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition)
+        return true
+    }
+
+    override fun onItemDismiss(position: Int) {
+        deleteStopwatch(position)
     }
 }

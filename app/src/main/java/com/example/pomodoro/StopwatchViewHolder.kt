@@ -9,7 +9,7 @@ import com.example.pomodoro.R.drawable
 import com.example.pomodoro.databinding.ItemBinding
 
 class StopwatchViewHolder(
-    val binding: ItemBinding,
+    private val binding: ItemBinding,
     private val listener: StopwatchListener,
     private val resources: Resources
 ) :

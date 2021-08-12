@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
@@ -68,7 +69,8 @@ class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
                 ).show()
             }
         }
-
+        val touchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(stopwatchAdapter))
+        touchHelper.attachToRecyclerView(binding.recycler)
     }
 
 
